@@ -1,6 +1,8 @@
 import re
 import numpy as np
+import pandas as pd
 import json
+
 
 ability_words = ["Battalion", "Bloodrush", "Channel", "Chroma", "Cohort", "Constellation", "Converge",
                  "Delirium", "Domain", "Fateful hour", "Ferocious", "Formidable", "Grandeur", "Hellbent",
@@ -33,13 +35,14 @@ def parseCard(card: json):
     # ability_words:["landfall"]
     # reserved:true => reserved
     # rarity:common => [common:0,uncommon:0,rare:0,mythic:0]
-    # power:1+* => [value:0, star:0]
-    # toughness:1+* => [value:0, star:0]
+    # power:0 => 0
+    # toughness:0 => 0
     # oracle_text:string => mds on the text to map to high dimensional latent space, replace card name with ~
     
     # sort out extra cards that we don't need to worry about (promotional, non-playable, videogame only, etc)
     if card["legalities"]["vintage"] == "not_legal": return None
-    
+    if "card_faces" in card: return None
+
     carddict = {} # holds all values that will go into the dataframe
 
     mana_cost: list[str] = re.findall(r'{(.*?)}', card["mana_cost"])
@@ -50,10 +53,37 @@ def parseCard(card: json):
             continue
         carddict[symbol] = count
         mana_cost = [i for i in mana_cost if i != symbol]
-    carddict['cost'] = mana_cost[0]
+    if len(mana_cost) == 0: carddict['cost'] = 0
+    else: carddict['cost'] = mana_cost[0]
 
+    type_line: str = card["type_line"]
+    for card_type in card_types:
+        if card_type in type_line:
+            carddict[card_type] = 1
+        else:
+            carddict[card_type] = 0
     
+    if carddict["creature"]:
+        carddict["toughness"] = int(card["power"])
+        carddict["power"] = int(card["power"])
+    
+    oracle:str = card["oracle_text"]
+    oracle = oracle.replace(card["name"], "~")
+    carddict["oracle"] = oracle
+    carddict["id"] = card["id"]
 
-    
     np.array([])
     return carddict
+
+def parseCards(filename: str):
+    cards = loadCards(filename)
+    card = parseCard(cards[0])
+    df = pd.DataFrame(columns=card.keys())
+    for card in cards:
+        card = parseCard(card)
+        if card == None:
+            continue
+        df.loc[len(df)] = card
+    df.to_csv('cards.csv', index=False)
+
+# parseCards('oracle-cards-20231203220253.json')

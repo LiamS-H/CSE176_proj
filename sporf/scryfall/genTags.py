@@ -1,6 +1,7 @@
 import requests
 import json
 from time import sleep
+from parseCards import ability_words, key_words, card_types
 
 def generateTags():
     otags = []
@@ -25,7 +26,7 @@ def writeTags(filename: str, otags: list[str]):
             output_file.write(tag + '\n')
 
 def readTags(filename: str):
-    with open("otags.txt", 'r', encoding='utf-8') as read_file:
+    with open(filename, 'r', encoding='utf-8') as read_file:
         return [otag.strip() for otag in read_file]
 
 def filterTags():
@@ -87,7 +88,7 @@ def writeTagMap(filename: str, jsonObj: any):
         json.dump(jsonObj, json_file, indent=2)
 
 def loadTagMap(filename: str)->dict[str, list[str]]:
-    with open(filename, 'w') as json_file:
+    with open(filename, 'r') as json_file:
         return json.load(json_file)
 
 def scryfallGetTagMap():
@@ -105,4 +106,24 @@ def scryfallGetTagMap():
     
     writeTagMap('tagmap.json',tagMap)
 
-scryfallGetTagMap()
+def isAbilityWord(tag: str):
+    for ability in ability_words:
+        if tag.startswith(ability.lower()) and "-" in tag:
+            return True
+    for keyword in key_words:
+        if tag.startswith(keyword.lower()) and "-" in tag:
+            return True
+    return False
+
+def filterTags():
+    tagMap: dict[str, list[str]] = loadTagMap("tagmap.json")
+    otags = set()
+    for (card_id, tags) in tagMap.items():
+        otags.update(tags)
+    filtered = set()
+    for tag in otags:
+        if isAbilityWord(tag):continue
+        filtered.add(tag)
+    print(len(filtered))
+
+filterTags()

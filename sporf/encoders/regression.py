@@ -3,7 +3,7 @@ from sklearn.metrics import mean_squared_error
 
 import numpy as np
 
-def convert_array(arr: np.ndarray | list, dim:str="1d"):
+def convert_array(arr: list, dim:str="1d"):
     arr = np.array(arr)
     if dim == "1d":
         return arr.ravel() if arr.ndim > 1 else arr.flatten()
