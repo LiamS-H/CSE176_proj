@@ -1,7 +1,7 @@
 import requests
 import json
 from time import sleep
-from parseCards import ability_words, key_words, card_types
+from parseCards import ability_words, key_words, card_types, keyword_abilities
 
 def generateTags():
     otags = []
@@ -113,6 +113,12 @@ def isAbilityWord(tag: str):
     for keyword in key_words:
         if tag.startswith(keyword.lower()) and "-" in tag:
             return True
+    for keyword in keyword_abilities:
+        if keyword.lower() == "affinity" and tag.startswith("affinity"):
+            print(tag.startswith(keyword.lower()) and "-" in tag)
+
+        if tag.startswith(keyword.lower()) and "-" in tag:
+            return True
     return False
 
 def filterTags():
@@ -122,8 +128,9 @@ def filterTags():
         otags.update(tags)
     filtered = set()
     for tag in otags:
-        if isAbilityWord(tag):continue
-        filtered.add(tag)
+        if not isAbilityWord(tag):
+            filtered.add(tag)
+    sorted_list = sorted(list(filtered))
+    writeTags("filter1tags.txt", sorted_list)
     print(len(filtered))
-
 filterTags()
