@@ -99,20 +99,29 @@ def parseCard(card: json):
     else: carddict['cost'] = mana_cost[0]
 
     type_line: str = card["type_line"]
+    type_line = type_line.lower()
     for card_type in card_types:
-        if card_type in type_line:
+        if card_type in type_line.lower():
             carddict[card_type] = 1
         else:
             carddict[card_type] = 0
     
     if carddict["creature"]:
-        carddict["toughness"] = int(card["power"])
-        carddict["power"] = int(card["power"])
+        p = re.sub("[^0-9]","",card["power"]) or "0"
+        t = re.sub("[^0-9]","",card["toughness"]) or "0"
+        
+        carddict["power"] = int(p)
+        carddict["toughness"] = int(t)
+        
+    else:
+        carddict["toughness"] = 0
+        carddict["power"] = 0
     
     oracle:str = card["oracle_text"]
     oracle = oracle.replace(card["name"], "~")
     carddict["oracle"] = oracle
     carddict["id"] = card["id"]
+    carddict["name"] = card["name"]
 
     np.array([])
     return carddict
@@ -121,11 +130,14 @@ def parseCards(filename: str):
     cards = loadCards(filename)
     card = parseCard(cards[0])
     df = pd.DataFrame(columns=card.keys())
-    for card in cards:
+    for i, card in enumerate(cards):
+        if i % 1000 == 0: print(i)
         card = parseCard(card)
         if card == None:
             continue
         df.loc[len(df)] = card
+    df['oracle'] = df['oracle'].fillna('')
     df.to_csv('cards.csv', index=False)
 
-# parseCards('oracle-cards-20231203220253.json')
+if __name__ == "__main__":
+    parseCards('oracle-cards-20231203220253.json')

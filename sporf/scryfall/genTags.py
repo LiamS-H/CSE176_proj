@@ -1,7 +1,7 @@
 import requests
 import json
 from time import sleep
-from parseCards import ability_words, key_words, card_types, keyword_abilities
+from scryfall.parseCards import ability_words, key_words, card_types, keyword_abilities
 
 def generateTags():
     otags = []
@@ -133,4 +133,3 @@ def filterTags():
     sorted_list = sorted(list(filtered))
     writeTags("filter1tags.txt", sorted_list)
     print(len(filtered))
-filterTags()
