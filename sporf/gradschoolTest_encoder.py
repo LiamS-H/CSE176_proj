@@ -17,8 +17,7 @@ from encoders.regression import KMeansEncoder
 # Read the CSV file into a DataFrame
 df = pd.read_csv('gradschool/graduateschool.csv')
 
-X = df[["TOEFL Score", "University Rating", "SOP", "LOR", "CGPA", "Research"]]
-# X = df[["GRE Score", "TOEFL Score", "University Rating", "SOP", "LOR", "CGPA", "Research"]]
+X = df[["GRE Score", "TOEFL Score", "University Rating", "SOP", "LOR", "CGPA", "Research"]]
 y = df["Chance of Admit"]
 listOfClassifiers = []
 
@@ -41,30 +40,35 @@ X_vali = scaler.transform(X_vali)
 y_train = y_train.values.reshape(-1, 1)
 y_vali = y_vali.values.reshape(-1, 1)
 
+listOfEncoders = []
+output_hparam = []
 
-encoder = KMeansEncoder(random_state=RANDOM_SEED)
-encoder.fit(y_train)
+for item in range(1, 20, 1):
+    encoder = KMeansEncoder(num_clusters=item)
+    encoder.fit(y_train)
+    listOfEncoders.append(encoder)
+    output_hparam.append(item)
 # print(encoder)
 
 
 
-y_train_encoded = encoder.encode(y_train)
-y_vali_encoded = encoder.encode(y_vali)
-hparameter = "max_depth"
+output_score_test = []
+output_score_validation = []
+   # output_hparam = []
+output_score_test_mean = []
+output_score_validation_mean = []
+
+for encoder in listOfEncoders:
+    y_train_encoded = encoder.encode(y_train)
+    y_vali_encoded = encoder.encode(y_vali)
+    hparameter = "max_depth"
 # Setup gaussian SPORF classifier
-for item in range(0, 20, 1):
+
     clf = rerfClassifier(n_estimators=10, random_state=RANDOM_SEED, max_depth=item)
     listOfClassifiers.append(clf)
 
-output_score_test = []
-output_score_validation = []
-output_hparam = []
-output_score_test_mean = []
-output_score_validation_mean = []
-    
 
-for clf in listOfClassifiers:
-    print(clf)
+    print(encoder)
     clf.fit(X_train, y_train_encoded.ravel())
 
     # Manual score calculation
@@ -96,7 +100,7 @@ for clf in listOfClassifiers:
 
     output_score_test_mean.append(metrics.mean_absolute_error(y_train, y_train_pred))
     output_score_validation_mean.append(metrics.mean_absolute_error(y_vali, y_vali_pred))
-    output_hparam.append(clf.get_params()[hparameter])
+    # output_hparam.append(i)
 
 plt.plot(output_hparam, output_score_test, label="Raw T_accuracy") #test error rate of raw classifier
 plt.plot(output_hparam, output_score_validation, label="Raw V_accuracy") #validation error rate of raw classifier
@@ -104,9 +108,9 @@ plt.plot(output_hparam, output_score_validation, label="Raw V_accuracy") #valida
 plt.plot(output_hparam, output_score_test_mean, label="Weighted T_error") #test error rate of raw classifier
 plt.plot(output_hparam, output_score_validation_mean, label="Weighted V_error") #validation error rate of raw classifier
 plt.legend()
-plt.title("Error/Accuracy Graph (SPORF) - No GRE")
-plt.xlabel(hparameter)
+plt.title("Error/Accuracy Graph (SPORF)")
+plt.xlabel("Number of clusters")
 plt.ylabel("Error/Accuracy Rate")
 
-plt.savefig('clf.png')
+plt.savefig('encoder.png')
 # %%
